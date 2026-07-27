@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP注册问卷</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #d4af37; 
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --correct-color: #28a745;
+            --wrong-color: #dc3545;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            border-top: 6px solid var(--accent-color);
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        .intro-text {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #eee;
+        }
+        .question-block {
+            margin-bottom: 25px;
+            padding: 18px;
+            background-color: #fafafa;
+            border-radius: 8px;
+            border: 1px solid #eaeaea;
+            transition: all 0.3s ease;
+        }
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 1.05em;
+        }
+        .hint {
+            font-size: 0.85em;
+            color: #888;
+            font-weight: normal;
+        }
+        .emphasis-dot {
+            -webkit-text-emphasis: dot;
+            text-emphasis: dot;
+            -webkit-text-emphasis-position: under;
+            text-emphasis-position: under;
+        }
+        label.option {
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 4px;
+        }
+        label.option:hover {
+            background-color: #f0f0f0;
+        }
+        input[type="text"], input[type="number"], input[type="email"], textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        button[type="submit"] {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background-color: var(--accent-color);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 40px;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        button[type="submit"]:hover {
+            background-color: #bfa132;
+        }
+        button[type="submit"]:active {
+            transform: scale(0.98);
+        }
+        button:disabled {
+            background-color: #cccccc !important;
+            cursor: not-allowed;
+        }
+        /* 动态反馈样式 */
+        .feedback {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            display: none; /* 默认隐藏，提交后由JS控制显示 */
+        }
+        .feedback.correct {
+            display: block;
+            background-color: #d4edda;
+            color: var(--correct-color);
+            border: 1px solid #c3e6cb;
+        }
+        .feedback.incorrect {
+            display: block;
+            background-color: #f8d7da;
+            color: var(--wrong-color);
+            border: 1px solid #f5c6cb;
+        }
+        #result-board {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            background-color: #e9f7ef;
+            border: 2px solid var(--correct-color);
+            border-radius: 8px;
+        }
+        #result-board h2 { margin: 0 0 10px 0; color: var(--correct-color); }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.85em;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>VIP 注册</h1>
+    <div class="intro-text">请认真填写以下信息，提交后将立即进行结算批改。</div>
+    
+    <!-- 请替换 action 中的 YOUR_FORM_ID -->
+    <form id="vipForm" action="https://formspree.io/f/xbdnwrwg" method="POST">
+        <input type="hidden" name="客观题总得分" id="auto_score" value="0">
+
+        <!-- ================= 一、基本信息 ================= -->
+        <div class="section-title">一、 基本信息</div>
+        <div class="question-block">
+            <label class="question-text" for="name">姓名</label>
+            <input type="text" id="name" name="姓名" required>
+        </div>
+        <div class="question-block">
+            <label class="question-text" for="age">年龄</label>
+            <input type="number" id="age" name="年龄" required placeholder="请输入您的年龄">
+        </div>
+        <div class="question-block">
+            <label class="question-text" for="email">邮箱</label>
+            <input type="email" id="email" name="邮箱" required>
+        </div>
+        <div class="question-block">
+            <label class="question-text" for="movie">电影</label>
+            <input type="text" id="movie" name="电影" required>
+        </div>
+        <div class="question-block">
+            <label class="question-text" for="music">音乐/歌手</label>
+            <input type="text" id="music" name="音乐_歌手" required>
+        </div>
+
+        <!-- ================= 二、选择题 ================= -->
+        <div class="section-title">二、 选择题</div>
+        <div class="question-block" id="qb_mcq_1">
+            <div class="question-text">1. 我<span class="emphasis-dot">没有</span>养过什么动物？</div>
+            <label class="option"><input type="radio" name="mcq_1" value="A" required> A. 小瓶子（虎皮鹦鹉）</label>
+            <label class="option"><input type="radio" name="mcq_1" value="B"> B. 大白（锦鲤）</label>
+            <label class="option"><input type="radio" name="mcq_1" value="C"> C. 邹黑鸭（柯尔鸭）</label>
+            <label class="option"><input type="radio" name="mcq_1" value="D"> D. 提摩西（大白兔）</label>
+            <div class="feedback"></div>
+        </div>
+
+        <div class="question-block" id="qb_mcq_2">
+            <div class="question-text">2. 我最讨厌什么水果？</div>
+            <label class="option"><input type="radio" name="mcq_2" value="A" required> A. 甜的</label>
+            <label class="option"><input type="radio" name="mcq_2" value="B"> B. 酸的</label>
+            <label class="option"><input type="radio" name="mcq_2" value="C"> C. 臭的</label>
+            <label class="option"><input type="radio" name="mcq_2" value="D"> D. 番茄</label>
+            <div class="feedback"></div>
+        </div>
+
+        <div class="question-block" id="qb_mcq_3">
+            <div class="question-text">3. 我最喜欢的球队是谁？</div>
+            <label class="option"><input type="radio" name="mcq_3" value="A" required> A. 中国男足</label>
+            <label class="option"><input type="radio" name="mcq_3" value="B"> B. 成都蓉城</label>
+            <label class="option"><input type="radio" name="mcq_3" value="C"> C. 拜仁慕尼黑</label>
+            <label class="option"><input type="radio" name="mcq_3" value="D"> D. 托特纳姆热刺</label>
+            <div class="feedback"></div>
+        </div>
+
+        <div class="question-block" id="qb_mcq_4">
+            <div class="question-text">4. 伏地魔灵魂被分成了几部分？</div>
+            <label class="option"><input type="radio" name="mcq_4" value="A" required> A. 67</label>
+            <label class="option"><input type="radio" name="mcq_4" value="B"> B. 6</label>
+            <label class="option"><input type="radio" name="mcq_4" value="C"> C. 7</label>
+            <label class="option"><input type="radio" name="mcq_4" value="D"> D. 8</label>
+            <div class="feedback"></div>
+        </div>
+
+        <div class="question-block" id="qb_mcq_5">
+            <div class="question-text">5. I solemnly swear that I am up to no good.</div>
+            <label class="option"><input type="radio" name="mcq_5" value="A" required> A. Mischief managed.</label>
+            <label class="option"><input type="radio" name="mcq_5" value="B"> B. Wingardium Leviosa</label>
+            <label class="option"><input type="radio" name="mcq_5" value="C"> C. Expelliarmus!</label>
+            <label class="option"><input type="radio" name="mcq_5" value="D"> D. Accio Firebolt</label>
+            <div class="feedback"></div>
+        </div>
+
+        <div class="question-block" id="qb_mcq_6">
+            <div class="question-text">6. 我的相机是什么型号？</div>
+            <label class="option"><input type="radio" name="mcq_6" value="A" required> A. Canon R9</label>
+            <label class="option"><input type="radio" name="mcq_6" value="B"> B. Sony A7M4</label>
+            <label class="option"><input type="radio" name="mcq_6" value="C"> C. Nikon Z9</label>
+            <label class="option"><input type="radio" name="mcq_6" value="D"> D. Sony A7S3</label>
+            <div class="feedback"></div>
+        </div>
+
+        <div class="question-block" id="qb_mcq_7">
+            <div class="question-text">7. ZouBot以几分的优势赢下了Bot Arena？</div>
+            <label class="option"><input type="radio" name="mcq_7" value="A" required> A. 0</label>
+            <label class="option"><input type="radio" name="mcq_7" value="B"> B. 1</label>
+            <label class="option"><input type="radio" name="mcq_7" value="C"> C. 2</label>
+            <label class="option"><input type="radio" name="mcq_7" value="D"> D. 钝角</label>
+            <div class="feedback"></div>
+        </div>
+
+        <!-- ================= 三、判断题 ================= -->
+        <div class="section-title">三、 判断题</div>
+        <div class="question-block" id="qb_tf_1">
+            <div class="question-text">1. Minecraft 还是 Terraria？</div>
+            <label class="option"><input type="radio" name="tf_1" value="Minecraft" required> Minecraft</label>
+            <label class="option"><input type="radio" name="tf_1" value="Terraria"> Terraria</label>
+            <div class="feedback"></div>
+        </div>
+
+        <div class="question-block" id="qb_tf_2">
+            <div class="question-text">2. Steam 还是 Epic？</div>
+            <label class="option"><input type="radio" name="tf_2" value="Steam" required> Steam</label>
+            <label class="option"><input type="radio" name="tf_2" value="Epic"> Epic</label>
+            <div class="feedback"></div>
+        </div>
+
+        <div class="question-block" id="qb_tf_3">
+            <div class="question-text">3. 67是烂梗吗？</div>
+            <label class="option"><input type="radio" name="tf_3" value="是" required> 是</label>
+            <label class="option"><input type="radio" name="tf_3" value="否"> 否</label>
+            <div class="feedback"></div>
+        </div>
+
+        <!-- 特殊题：原神还是崩铁 -->
+        <div class="question-block" id="qb_tf_4">
+            <div class="question-text">4. 原神还是崩铁？</div>
+            <label class="option"><input type="radio" name="tf_4" value="原神" required onchange="toggleExtraQuestion()"> 原神</label>
+            <label class="option"><input type="radio" name="tf_4" value="崩铁" onchange="toggleExtraQuestion()"> 崩铁</label>
+            <label class="option"><input type="radio" name="tf_4" value="我就不选" onchange="toggleExtraQuestion()"> 我就不选</label>
+            <div class="feedback"></div>
+        </div>
+
+        <!-- 隐藏的衍生题 -->
+        <div class="question-block" id="extra_game_div" style="display: none; border-left: 4px solid var(--accent-color);">
+            <div class="question-text">✨ 隐藏题：原神、崩铁、绝区零我玩过哪个？</div>
+            <label class="option"><input type="radio" name="tf_4_extra" value="原神" id="extra_r1"> 原神</label>
+            <label class="option"><input type="radio" name="tf_4_extra" value="崩铁" id="extra_r2"> 崩铁</label>
+            <label class="option"><input type="radio" name="tf_4_extra" value="绝区零" id="extra_r3"> 绝区零</label>
+            <div class="feedback"></div>
+        </div>
+
+        <div class="question-block" id="qb_tf_5">
+            <div class="question-text">5. 你拥有牛津大学出版社吗？</div>
+            <label class="option"><input type="radio" name="tf_5" value="是" required> 是</label>
+            <label class="option"><input type="radio" name="tf_5" value="否"> 否</label>
+            <div class="feedback"></div>
+        </div>
+
+        <div class="question-block" id="qb_tf_6">
+            <div class="question-text">6. 我的微信头像上是否有emoji？</div>
+            <label class="option"><input type="radio" name="tf_6" value="是" required> 是</label>
+            <label class="option"><input type="radio" name="tf_6" value="否"> 否</label>
+            <div class="feedback"></div>
+        </div>
+
+        <!-- ================= 四、问答题 ================= -->
+        <div class="section-title">四、 问答题</div>
+        <div class="question-block">
+            <label class="question-text">1. 我最常说的一句话是什么？</label>
+            <textarea name="问答题_1_最常说的话" required></textarea>
+        </div>
+        
+        <div class="question-block">
+            <label class="question-text">2. 我的英文名是什么？为什么叫这个（两种任选其一）？你怎么知道的？</label>
+            <textarea name="问答题_2_英文名" required></textarea>
+        </div>
+
+        <div class="question-block">
+            <label class="question-text">3. 我第一次见你是在哪里？你第一次见我是在哪里？</label>
+            <textarea name="问答题_3_初次见面" required></textarea>
+        </div>
+
+        <div class="question-block">
+            <label class="question-text">4. 为什么加的微信？（我真忘了）</label>
+            <textarea name="问答题_4_加微信原因" required></textarea>
+        </div>
+
+        <div class="question-block">
+            <label class="question-text">5. 对我的第一印象是什么？<br><span class="hint">Bonus：回答后可以知道我对你的第一印象</span></label>
+            <textarea name="问答题_5_第一印象" required></textarea>
+        </div>
+
+        <div class="question-block">
+            <label class="question-text">6. 你为什么想加入这个网站？</label>
+            <textarea name="问答题_6_加入原因" required></textarea>
+        </div>
+
+        <div class="question-block">
+            <label class="question-text">7. 用三个词形容你自己。</label>
+            <input type="text" name="问答题_7_形容自己" required>
+        </div>
+
+        <!-- ================= 五、附加题 ================= -->
+        <div class="section-title">五、 附加题 <span class="hint">（放弃作答请填写任意字符）</span></div>
+        <div class="question-block">
+            <label class="question-text">1. 请告诉我：如果世界上所有加拿大黑雁和欧亚雁突然消失了，会发生什么？（至少20字）</label>
+            <textarea name="附加题_1_雁消失"></textarea>
+        </div>
+        
+        <div class="question-block">
+            <label class="question-text">2. 给网站起一个新名字。</label>
+            <input type="text" name="附加题_2_新名字">
+        </div>
+
+        <div class="question-block">
+            <label class="question-text">3. 留一句想对站长说的话。</label>
+            <textarea name="附加题_3_留言"></textarea>
+        </div>
+
+        <!-- 结果展示板 -->
+        <div id="result-board">
+            <h2>考核完成！</h2>
+            <p id="final-score-text">您的客观题总得分：0 分</p>
+            <p>（主观题将人工批阅，您的数据正在上传...）</p>
+        </div>
+
+        <button type="submit" id="submitBtn">提交</button>
+    </form>
+    
+    <div class="footer">
+        <div>问卷编号：172711</div>
+        <div>版权所有，作者保留所有权利</div>
+    </div>
+</div>
+
+<script>
+    // ================= 逻辑控制区 =================
+
+    // 1. 特殊题展开逻辑
+    function toggleExtraQuestion() {
+        const tf4Value = document.querySelector('input[name="tf_4"]:checked').value;
+        const extraDiv = document.getElementById('extra_game_div');
+        const extraInputs = document.querySelectorAll('input[name="tf_4_extra"]');
+        
+        if (tf4Value === '我就不选') {
+            extraDiv.style.display = 'block';
+            extraInputs.forEach(input => input.required = true);
+        } else {
+            extraDiv.style.display = 'none';
+            extraInputs.forEach(input => {
+                input.required = false;
+                input.checked = false; // 清除选中状态
+            });
+        }
+    }
+
+    // 2. 标准答案设定与批改逻辑
+    const answerKey = {
+        "mcq_1": "D",
+        "mcq_2": "B",
+        "mcq_3": "D",
+        "mcq_4": "D",
+        "mcq_5": "A",
+        "mcq_6": "B",
+        "mcq_7": "B",
+        "tf_1": "Minecraft",
+        "tf_2": "Steam",
+        "tf_3": "是",
+        // tf_4 没有正确答案，如果展开了隐藏题则批改隐藏题
+        "tf_4_extra": "绝区零", 
+        "tf_5": "是",
+        "tf_6": "是"
+    };
+    
+    const pointsPerQuestion = 10; // 每题10分 (最高130分)
+
+    const form = document.getElementById('vipForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', function(event) {
+        event.preventDefault(); // 阻止默认的立即跳转行为
+
+        // 验证年龄
+        const ageInput = document.getElementById('age').value;
+        if (ageInput !== "23") {
+            alert("请填写真实年龄");
+            return;
+        }
+
+        let totalScore = 0;
+
+        // 锁定表单（防止二次修改）
+        const allInputs = form.querySelectorAll('input, textarea');
+        allInputs.forEach(input => input.disabled = true);
+        submitBtn.style.display = 'none'; // 隐藏提交按钮
+
+        // 开始批改
+        for (const [qName, correctAns] of Object.entries(answerKey)) {
+            const blockId = qName === 'tf_4_extra' ? 'extra_game_div' : `qb_${qName}`;
+            const block = document.getElementById(blockId);
+            
+            if (!block) continue; // 安全检查
+            const feedbackDiv = block.querySelector('.feedback');
+            const selectedOption = document.querySelector(`input[name="${qName}"]:checked`);
+            
+            // 如果是隐藏题但没有展示，则跳过批改
+            if (qName === 'tf_4_extra' && block.style.display === 'none') {
+                continue; 
+            }
+
+            if (selectedOption && selectedOption.value === correctAns) {
+                totalScore += pointsPerQuestion;
+                feedbackDiv.textContent = "✅ 回答正确！得 10 分";
+                feedbackDiv.className = "feedback correct";
+            } else {
+                let userAns = selectedOption ? selectedOption.value : "未作答";
+                feedbackDiv.textContent = `❌ 回答错误！正确答案是：${correctAns}。您的回答：${userAns}`;
+                feedbackDiv.className = "feedback incorrect";
+            }
+        }
+
+        // 记录总分到隐藏字段
+        document.getElementById('auto_score').value = totalScore + " 分";
+        
+        // 展示分数面板
+        const resultBoard = document.getElementById('result-board');
+        const scoreText = document.getElementById('final-score-text');
+        scoreText.innerHTML = `客观题得分：<strong>${totalScore}</strong> 分`;
+        resultBoard.style.display = 'block';
+
+        // 3. 后台静默发送数据到 Formspree
+        // 注意：因为 disabled 的 input 不会被 FormData 捕捉，我们需要临时解除 disabled 或者克隆数据。
+        allInputs.forEach(input => input.disabled = false); // 暂时解开
+        const formData = new FormData(form);
+        allInputs.forEach(input => input.disabled = true);  // 重新锁定，保证体验
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'Accept': 'application/json' }
+        }).then(response => {
+            if (response.ok) {
+                scoreText.innerHTML += "<br><span style='color:#28a745; font-size:0.9em;'>✅ 所有数据已成功上传至服务器存档。</span>";
+            } else {
+                scoreText.innerHTML += "<br><span style='color:#dc3545; font-size:0.9em;'>⚠️ 数据上传遇到问题，请检查网络或后端配置。</span>";
+            }
+        }).catch(error => {
+            scoreText.innerHTML += "<br><span style='color:#dc3545; font-size:0.9em;'>⚠️ 提交失败，请联系站长。</span>";
+        });
+    });
+</script>
+
+</body>
+</html>
