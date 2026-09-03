@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VIP Access</title>
-    <!-- 引入 Plyr 播放器样式 -->
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -113,10 +111,21 @@
             font-weight: 600;
             color: #333;
         }
-
-        /* 针对 YouTube 播放器的比例优化 */
-        .plyr--youtube {
-            aspect-ratio: 16/9;
+        
+        /* YouTube 播放器容器，确保 16:9 比例 */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+        }
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
         }
     </style>
 </head>
@@ -138,20 +147,19 @@
             <span style="font-size: 14px; font-weight: normal; color: #666;" id="welcome-text"></span>
         </h2>
         
-        <!-- 视频一：已修改为 YouTube 托管 -->
+        <!-- 视频一：纯净 YouTube API 版 -->
         <div class="video-card">
-            <div class="video-title">cooking (2026-09-03)</div>
-            
-            <!-- 这里不再使用 <video> 标签，而是使用带有特殊 data 属性的 div -->
-            <!-- Plyr 会自动识别 YouTube ID: j_RxwcT_DXg 并生成播放器 -->
-            <div id="player-1" data-plyr-provider="youtube" data-plyr-embed-id="j_RxwcT_DXg"></div>
-            
+            <div class="video-title">Cooking (2026-09-03)</div>
+            <div class="video-wrapper">
+                <!-- YouTube API 会自动将这个 div 替换为带原生控件的 iframe -->
+                <div id="youtube-player-1"></div>
+            </div>
         </div>
 
     </div>
 
-    <!-- 引入 Plyr JS -->
-    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <!-- 引入 YouTube Iframe API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script>
         const loginBtn = document.getElementById('login-btn');
         const emailInput = document.getElementById('email-input');
@@ -161,7 +169,7 @@
         const directorySection = document.getElementById('directory-section');
         const welcomeText = document.getElementById('welcome-text');
 
-        // 切换到目录
+        // 切换到目录的函数
         function showDirectory(userName) {
             loginSection.classList.add('hidden');
             directorySection.classList.remove('hidden');
@@ -177,7 +185,7 @@
                 showDirectory('dev (开发者)');
             } 
             else if (email === '488540035@qq.com') {
-                messageDiv.innerHTML = '欢迎您，VIP Jeffee';
+                messageDiv.innerHTML = '欢迎您，VIP Jaffee';
                 messageDiv.className = 'success';
                 
                 emailInput.classList.add('hidden');
@@ -185,7 +193,7 @@
                 spinner.classList.remove('hidden');
 
                 setTimeout(() => {
-                    showDirectory('VIP Jeffee');
+                    showDirectory('VIP Jaffee');
                 }, 5000);
             } 
             else {
@@ -198,47 +206,53 @@
             if (e.key === 'Enter') loginBtn.click();
         });
 
-        // 播放器初始化与进度记忆功能（适配 YouTube）
-        let playerInitialized = false;
+        // ================= YouTube API 核心逻辑 =================
+        let player;
+        const progressKey = 'vip_video_progress_youtube_native_20260903';
+        let progressTimer;
+
         function initVideoPlayer() {
-            if (playerInitialized) return;
-            
-            // 1. 初始化 Plyr 播放器，保留倍速设置
-            const player = new Plyr('#player-1', {
-                speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
-                i18n: { speed: '倍速', normal: '正常' },
-                youtube: {
-                    noCookie: true, // 使用 nocookie 域名，保护隐私
-                    rel: 0,         // 不显示推荐视频
-                    showinfo: 0,    // 隐藏信息
-                    iv_load_policy: 3, // 隐藏视频注释
-                    modestbranding: 1  // 最小化 YouTube Logo
+            // 如果 YouTube API 未准备好，或播放器已初始化，则跳过
+            if (typeof YT === 'undefined' || typeof YT.Player === 'undefined' || player) return;
+
+            player = new YT.Player('youtube-player-1', {
+                videoId: 'j_RxwcT_DXg', // 你的视频 ID
+                playerVars: {
+                    'playsinline': 1,
+                    'rel': 0,           // 播放结束后不显示无关推荐视频
+                    'modestbranding': 1 // 隐藏右下角 YouTube Logo
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
                 }
             });
+        }
 
-            const progressKey = 'vip_video_progress_j_RxwcT_DXg';
+        // 播放器准备就绪时触发
+        function onPlayerReady(event) {
+            const savedTime = localStorage.getItem(progressKey);
+            if (savedTime && parseFloat(savedTime) > 0) {
+                player.seekTo(parseFloat(savedTime), true);
+            }
+        }
 
-            // 2. 监听 Plyr 的 ready 事件（YouTube 初始化完成）来恢复进度
-            player.on('ready', () => {
-                const savedTime = localStorage.getItem(progressKey);
-                if (savedTime && parseFloat(savedTime) > 0) {
-                    player.currentTime = parseFloat(savedTime);
+        // 播放状态改变时触发
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.PLAYING) {
+                // 每秒保存一次进度
+                progressTimer = setInterval(() => {
+                    localStorage.setItem(progressKey, player.getCurrentTime());
+                }, 1000);
+            } else {
+                // 暂停或缓冲时停止保存进度
+                clearInterval(progressTimer);
+                
+                // 如果播放结束，清除记录
+                if (event.data === YT.PlayerState.ENDED) {
+                    localStorage.removeItem(progressKey);
                 }
-            });
-
-            // 3. 监听 Plyr 的 timeupdate 事件来保存进度
-            player.on('timeupdate', () => {
-                if (!player.paused) {
-                    localStorage.setItem(progressKey, player.currentTime);
-                }
-            });
-            
-            // 4. 播放结束时清理进度记录
-            player.on('ended', () => {
-                localStorage.removeItem(progressKey);
-            });
-
-            playerInitialized = true;
+            }
         }
     </script>
 </body>
