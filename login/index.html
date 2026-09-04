@@ -147,19 +147,25 @@
                 title: "Cooking (2026-09-03)", 
                 date: "2026-09-03",
                 youtubeId: "j_RxwcT_DXg", 
-                link: "videos/video1.html" // 指向子文件夹内的播放器页面
+                link: "/videos/video1.html" 
+// 完整 URL（绝对路径）：如果视频页面在其他网站，或者你想写死绝对地址。
+//link: "https://www.example.com/pages/video1.html" 
+//根目录相对路径：以 / 开头，代表从你的网站根目录开始找。不管当前页面在哪个层级，都会回到根目录找。
+//link: "/all-videos/video1.html" 
+//上级目录相对路径：如果视频页面在当前文件的上一层（或更上一层）。
+//link: "../videos/video1.html" // 返回上一级目录找 videos 文件夹
             },
             { 
-                title: "Vlog 记录 01", 
+                title: "uncut", 
                 date: "2026-09-04",
                 youtubeId: "xWf2lFTTXFg", 
-                link: "videos/video2.html" 
+                link: "/videos/video2.html" 
             },
             { 
-                title: "日常随拍 02", 
+                title: "eggs", 
                 date: "2026-09-04",
                 youtubeId: "7w4aeVafMM8", 
-                link: "videos/video3.html" 
+                link: "/videos/video3.html" 
             }
         ];
 
