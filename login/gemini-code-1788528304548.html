@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP Access - Video Directory</title>
+    <style>
+        /* 基础样式与重置 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f5f7;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+        
+        /* 登录框样式 */
+        .login-container {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+            text-align: center;
+            width: 100%;
+            max-width: 360px;
+        }
+        .login-container h2 { margin-top: 0; color: #333; }
+        input {
+            box-sizing: border-box; width: 100%; padding: 12px; margin: 15px 0;
+            border: 1px solid #ddd; border-radius: 6px; font-size: 14px;
+        }
+        button {
+            width: 100%; padding: 12px; background-color: #2c3e50; color: white;
+            border: none; border-radius: 6px; font-size: 16px; cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: #1a252f; }
+        .hidden { display: none !important; }
+        .error { color: #e74c3c; margin-top: 15px; font-size: 14px; font-weight: bold; }
+        .success { color: #27ae60; margin-top: 15px; font-size: 14px; font-weight: bold; }
+        .spinner {
+            border: 4px solid #f3f3f3; border-top: 4px solid #2c3e50;
+            border-radius: 50%; width: 40px; height: 40px;
+            animation: spin 1s linear infinite; margin: 20px auto;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* 目录容器样式 (PC端宽屏，移动端自适应) */
+        .directory-container {
+            background: white; padding: 30px; border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+            width: 100%; max-width: 1000px; align-self: flex-start; margin-top: 20px;
+        }
+        
+        .directory-header {
+            display: flex; flex-wrap: wrap; justify-content: space-between;
+            align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px;
+        }
+        .directory-header h2 { margin: 0; }
+        
+        /* 搜索框 */
+        .search-bar {
+            width: 100%; max-width: 300px; margin-top: 10px;
+        }
+        .search-bar input { margin: 0; padding: 10px; border-radius: 20px; }
+
+        /* 视频网格：CSS Grid 自动响应式 */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        /* 视频卡片 */
+        .video-card {
+            background: #fff; border: 1px solid #eaeaea; border-radius: 8px;
+            overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;
+            text-decoration: none; color: inherit; display: flex; flex-direction: column;
+        }
+        .video-card:hover {
+            transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        }
+        .video-thumb {
+            width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background-color: #f8f9fa;
+        }
+        .video-info { padding: 15px; }
+        .video-title { font-weight: 600; font-size: 16px; color: #333; margin-bottom: 5px; }
+        .video-date { font-size: 12px; color: #888; }
+
+        /* 分页控件 */
+        .pagination {
+            display: flex; justify-content: center; align-items: center; margin-top: 30px; gap: 15px;
+        }
+        .pagination button { width: auto; padding: 8px 16px; font-size: 14px; }
+        .pagination button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .page-info { font-size: 14px; font-weight: 600; color: #555; }
+
+        /* 移动端细微调整 */
+        @media (max-width: 600px) {
+            .directory-header { flex-direction: column; align-items: flex-start; }
+            .search-bar { max-width: 100%; margin-top: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-section" class="login-container">
+        <h2>VIP Access</h2>
+        <input type="text" id="email-input" placeholder="请输入VIP账户或邮箱" autocomplete="off">
+        <button id="login-btn">验证身份</button>
+        <div id="message"></div>
+        <div id="spinner" class="spinner hidden"></div>
+    </div>
+
+    <div id="directory-section" class="directory-container hidden">
+        <div class="directory-header">
+            <div>
+                <h2>Video Library</h2>
+                <span style="font-size: 14px; color: #666;" id="welcome-text"></span>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="search-input" placeholder="搜索视频名称...">
+            </div>
+        </div>
+        
+        <div id="video-grid" class="video-grid">
+            </div>
+
+        <div class="pagination">
+            <button id="prev-page">上一页</button>
+            <span class="page-info" id="page-info">1 / 1</span>
+            <button id="next-page">下一页</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. 视频数据库 (每次添加新视频只需在这里加一行)
+        // ==========================================
+        const videoDatabase = [
+            { 
+                title: "Cooking (2026-09-03)", 
+                date: "2026-09-03",
+                youtubeId: "j_RxwcT_DXg", 
+                link: "videos/video1.html" // 指向子文件夹内的播放器页面
+            },
+            { 
+                title: "Vlog 记录 01", 
+                date: "2026-09-04",
+                youtubeId: "xWf2lFTTXFg", 
+                link: "videos/video2.html" 
+            },
+            { 
+                title: "日常随拍 02", 
+                date: "2026-09-04",
+                youtubeId: "7w4aeVafMM8", 
+                link: "videos/video3.html" 
+            }
+        ];
+
+        // ==========================================
+        // 2. 列表渲染与搜索分页逻辑
+        // ==========================================
+        const ITEMS_PER_PAGE = 6;
+        let currentPage = 1;
+        let filteredVideos = [...videoDatabase];
+
+        const videoGrid = document.getElementById('video-grid');
+        const searchInput = document.getElementById('search-input');
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+        const pageInfo = document.getElementById('page-info');
+
+        function renderVideos() {
+            videoGrid.innerHTML = '';
+            
+            // 计算分页
+            const totalPages = Math.ceil(filteredVideos.length / ITEMS_PER_PAGE) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            
+            const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+            const currentItems = filteredVideos.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+
+            if (currentItems.length === 0) {
+                videoGrid.innerHTML = '<p style="color:#888; grid-column: 1/-1; text-align:center;">没有找到匹配的视频</p>';
+            }
+
+            // 生成卡片 (自动获取 YouTube 高清封面)
+            currentItems.forEach(video => {
+                const thumbUrl = `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`;
+                const card = document.createElement('a');
+                card.className = 'video-card';
+                card.href = video.link;
+                // 用 target="_blank" 可以在新标签页打开，不需要的话删掉下一行
+                // card.target = '_blank'; 
+                
+                card.innerHTML = `
+                    <img class="video-thumb" src="${thumbUrl}" alt="thumbnail" loading="lazy">
+                    <div class="video-info">
+                        <div class="video-title">${video.title}</div>
+                        <div class="video-date">${video.date}</div>
+                    </div>
+                `;
+                videoGrid.appendChild(card);
+            });
+
+            // 更新分页状态
+            pageInfo.innerText = `${currentPage} / ${totalPages}`;
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+        }
+
+        // 搜索事件监听
+        searchInput.addEventListener('input', (e) => {
+            const keyword = e.target.value.toLowerCase();
+            filteredVideos = videoDatabase.filter(v => v.title.toLowerCase().includes(keyword));
+            currentPage = 1;
+            renderVideos();
+        });
+
+        // 翻页事件监听
+        prevBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderVideos(); } });
+        nextBtn.addEventListener('click', () => { 
+            const totalPages = Math.ceil(filteredVideos.length / ITEMS_PER_PAGE);
+            if (currentPage < totalPages) { currentPage++; renderVideos(); } 
+        });
+
+
+        // ==========================================
+        // 3. 登录逻辑 (保留原版)
+        // ==========================================
+        const loginBtn = document.getElementById('login-btn');
+        const emailInput = document.getElementById('email-input');
+        const messageDiv = document.getElementById('message');
+        const spinner = document.getElementById('spinner');
+        const loginSection = document.getElementById('login-section');
+        const directorySection = document.getElementById('directory-section');
+        const welcomeText = document.getElementById('welcome-text');
+
+        function showDirectory(userName) {
+            loginSection.classList.add('hidden');
+            directorySection.classList.remove('hidden');
+            document.body.style.alignItems = 'flex-start';
+            welcomeText.innerText = `当前登录: ${userName}`;
+            renderVideos(); // 登录成功后渲染视频
+        }
+
+        loginBtn.addEventListener('click', () => {
+            const email = emailInput.value.trim();
+            if (email === 'dev') {
+                showDirectory('dev (开发者)');
+            } else if (email === '488540035@qq.com') {
+                messageDiv.innerHTML = '欢迎您，VIP Jaffee';
+                messageDiv.className = 'success';
+                emailInput.classList.add('hidden');
+                loginBtn.classList.add('hidden');
+                spinner.classList.remove('hidden');
+                setTimeout(() => { showDirectory('VIP Jaffee'); }, 1500); // 缩短了一点等待时间提升体验
+            } else {
+                messageDiv.innerHTML = 'access denied<br>权阶等级过低，请联系管理员后再试。';
+                messageDiv.className = 'error';
+            }
+        });
+
+        emailInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+    </script>
+</body>
+</html>
