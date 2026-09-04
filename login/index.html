@@ -127,7 +127,7 @@
 <body>
 
     <div id="login-section" class="login-container">
-        <h2>VIP 登录</h2>
+        <h2>Login</h2>
         <input type="text" id="email-input" placeholder="请输入VIP账户或邮箱" autocomplete="off">
         <button id="login-btn">验证身份</button>
         <div id="message"></div>
@@ -136,12 +136,12 @@
 
     <div id="directory-section" class="directory-container hidden">
         <h2>
-            VIP 专属视频目录
+            Video Playlist
             <span style="font-size: 14px; font-weight: normal; color: #666;" id="welcome-text"></span>
         </h2>
         
         <div class="video-card">
-            <div class="video-title">烹饪教学 (2026-09-03)</div>
+            <div class="video-title">Cooking (2026-09-03)</div>
             
             <div id="player-1" data-plyr-provider="youtube" data-plyr-embed-id="j_RxwcT_DXg"></div>
             
@@ -176,7 +176,7 @@
                 showDirectory('dev (开发者)');
             } 
             else if (email === '488540035@qq.com') {
-                messageDiv.innerHTML = '欢迎您，VIP coffee';
+                messageDiv.innerHTML = '欢迎您，VIP Jaffee';
                 messageDiv.className = 'success';
                 
                 emailInput.classList.add('hidden');
@@ -184,7 +184,7 @@
                 spinner.classList.remove('hidden');
 
                 setTimeout(() => {
-                    showDirectory('VIP coffee');
+                    showDirectory('VIP Jeffee');
                 }, 5000);
             } 
             else {
