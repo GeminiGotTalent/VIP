@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP Access</title>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f5f7;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+        
+        .login-container {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+            text-align: center;
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .login-container h2 { margin-top: 0; color: #333; }
+        
+        input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: #1a252f; }
+
+        #message {
+            margin-top: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+            font-weight: bold;
+        }
+
+        .error { color: #e74c3c; }
+        .success { color: #27ae60; }
+        .hidden { display: none !important; }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2c3e50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* 视频目录样式 */
+        .directory-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 1000px;
+            align-self: flex-start;
+            margin-top: 40px;
+        }
+
+        .directory-container h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .video-card {
+            background: #fff;
+            border: 1px solid #eaeaea;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            margin-top: 20px;
+        }
+        
+        .video-title {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eaeaea;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        /* 强制 Plyr 容器比例为 16:9，防止加载时页面跳动 */
+        .plyr {
+            aspect-ratio: 16 / 9;
+        }
+        
+        /* 定制一点 VIP 播放器的主题色 (可选) */
+        :root {
+            --plyr-color-main: #2c3e50; 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-section" class="login-container">
+        <h2>VIP 登录</h2>
+        <input type="text" id="email-input" placeholder="请输入VIP账户或邮箱" autocomplete="off">
+        <button id="login-btn">验证身份</button>
+        <div id="message"></div>
+        <div id="spinner" class="spinner hidden"></div>
+    </div>
+
+    <div id="directory-section" class="directory-container hidden">
+        <h2>
+            VIP 专属视频目录
+            <span style="font-size: 14px; font-weight: normal; color: #666;" id="welcome-text"></span>
+        </h2>
+        
+        <div class="video-card">
+            <div class="video-title">烹饪教学 (2026-09-03)</div>
+            
+            <div id="player-1" data-plyr-provider="youtube" data-plyr-embed-id="j_RxwcT_DXg"></div>
+            
+        </div>
+
+    </div>
+
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script>
+        const loginBtn = document.getElementById('login-btn');
+        const emailInput = document.getElementById('email-input');
+        const messageDiv = document.getElementById('message');
+        const spinner = document.getElementById('spinner');
+        const loginSection = document.getElementById('login-section');
+        const directorySection = document.getElementById('directory-section');
+        const welcomeText = document.getElementById('welcome-text');
+
+        // 切换到目录的函数
+        function showDirectory(userName) {
+            loginSection.classList.add('hidden');
+            directorySection.classList.remove('hidden');
+            document.body.style.alignItems = 'flex-start';
+            welcomeText.innerText = `当前登录: ${userName}`;
+            initVideoPlayer(); 
+        }
+
+        // 登录逻辑
+        loginBtn.addEventListener('click', () => {
+            const email = emailInput.value.trim();
+
+            if (email === 'dev') {
+                showDirectory('dev (开发者)');
+            } 
+            else if (email === '488540035@qq.com') {
+                messageDiv.innerHTML = '欢迎您，VIP coffee';
+                messageDiv.className = 'success';
+                
+                emailInput.classList.add('hidden');
+                loginBtn.classList.add('hidden');
+                spinner.classList.remove('hidden');
+
+                setTimeout(() => {
+                    showDirectory('VIP coffee');
+                }, 5000);
+            } 
+            else {
+                messageDiv.innerHTML = 'access denied<br>权阶等级过低，请联系管理员后再试。';
+                messageDiv.className = 'error';
+            }
+        });
+
+        emailInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+
+        // 播放器初始化与进度记忆功能
+        let playerInitialized = false;
+        function initVideoPlayer() {
+            if (playerInitialized) return;
+            
+            // 1. 初始化 Plyr 播放器，最大化开启控制面板功能
+            const player = new Plyr('#player-1', {
+                // 定义播放器显示的控件
+                controls: [
+                    'play-large', 'play', 'progress', 'current-time', 'mute', 'volume',
+                    'captions', 'settings', 'pip', 'airplay', 'fullscreen'
+                ],
+                // 设置菜单里显示的选项（尽力保留字幕、画质、倍速）
+                settings: ['captions', 'quality', 'speed'],
+                speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+                i18n: { 
+                    speed: '倍速', normal: '正常', 
+                    captions: '字幕', quality: '画质', disabled: '关闭' 
+                },
+                // YouTube API 传参设置
+                youtube: { 
+                    noCookie: false, 
+                    rel: 0, 
+                    showinfo: 0, 
+                    iv_load_policy: 3, 
+                    modestbranding: 1,
+                    cc_load_policy: 1 // 尝试强制加载字幕
+                }
+            });
+
+            const progressKey = 'vip_video_progress_plyr_yt_20260903';
+
+            // 2. 当 Plyr 解析 YouTube 完毕并 ready 时，读取进度
+            player.on('ready', () => {
+                const savedTime = localStorage.getItem(progressKey);
+                if (savedTime && parseFloat(savedTime) > 0) {
+                    player.currentTime = parseFloat(savedTime);
+                }
+            });
+
+            // 3. 播放时持续记录进度 (Plyr 会自动抓取 YouTube 的进度事件)
+            player.on('timeupdate', () => {
+                if (player.playing && player.currentTime > 0) {
+                    localStorage.setItem(progressKey, player.currentTime);
+                }
+            });
+            
+            // 4. 播放结束时清理进度记录
+            player.on('ended', () => {
+                localStorage.removeItem(progressKey);
+            });
+
+            playerInitialized = true;
+        }
+    </script>
+</body>
+</html>
