@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP 会员申请问卷</title>
+    <style>
+        :root {
+            --primary-color: #d4af37; /* VIP 金色主题 */
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--primary-color);
+        }
+        h1 {
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #eee;
+        }
+        .question-block {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fcfcfc;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        input[type="text"], input[type="email"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        button[type="submit"] {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: background-color 0.3s;
+        }
+        button[type="submit"]:hover {
+            background-color: #b5952f;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>VIP 会员申请问卷</h1>
+    
+    <!-- 
+      注意：action 中的 URL 需要替换为你申请的后端接收地址（见下方说明） 
+    -->
+    <form id="vipForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        
+        <!-- 这个隐藏字段用于存储 JavaScript 自动计算的客观题总分 -->
+        <input type="hidden" name="客观题自动得分" id="auto_score" value="0">
+
+        <div class="section-title">一、 基本信息</div>
+        <div class="question-block">
+            <label class="question-text" for="username">您的姓名 / 昵称：</label>
+            <input type="text" id="username" name="姓名" required>
+        </div>
+        <div class="question-block">
+            <label class="question-text" for="email">联系邮箱（用于接收结果）：</label>
+            <input type="email" id="email" name="邮箱" required>
+        </div>
+
+        <div class="section-title">二、 选择题（自动算分）</div>
+        <div class="question-block">
+            <div class="question-text">1. 这是一个示例单选题，你认为下面哪个选项是正确的？</div>
+            <!-- name 属性对应这道题的 ID，用于 JS 批改 -->
+            <label><input type="radio" name="mcq_1" value="A" required> A. 选项 A</label>
+            <label><input type="radio" name="mcq_1" value="B"> B. 选项 B</label>
+            <label><input type="radio" name="mcq_1" value="C"> C. 选项 C</label>
+        </div>
+        
+        <div class="question-block">
+            <div class="question-text">2. 第二道选择题的示例问题？</div>
+            <label><input type="radio" name="mcq_2" value="A" required> A. 选项 A</label>
+            <label><input type="radio" name="mcq_2" value="B"> B. 选项 B</label>
+            <label><input type="radio" name="mcq_2" value="C"> C. 选项 C</label>
+        </div>
+
+        <div class="section-title">三、 判断题（自动算分）</div>
+        <div class="question-block">
+            <div class="question-text">3. 这是一个示例判断题，说法正确吗？</div>
+            <label><input type="radio" name="tf_1" value="True" required> 正确</label>
+            <label><input type="radio" name="tf_1" value="False"> 错误</label>
+        </div>
+
+        <div class="section-title">四、 简答 / 填空题（人工批改）</div>
+        <div class="question-block">
+            <label class="question-text" for="blank_1">4. 请简述您申请 VIP 的主要原因：</label>
+            <!-- 填空题的内容会直接作为文本提交给你 -->
+            <textarea id="blank_1" name="简答题_申请原因" placeholder="请输入您的回答..." required></textarea>
+        </div>
+        
+        <div class="question-block">
+            <label class="question-text" for="blank_2">5. 填空：1 + 1 等于几？</label>
+            <input type="text" id="blank_2" name="填空题_1加1" placeholder="请填写...">
+        </div>
+
+        <button type="submit">提交问卷</button>
+    </form>
+</div>
+
+<script>
+    // 在这里配置客观题（选择/判断）的正确答案和每题的分值
+    const answerKey = {
+        "mcq_1": "A",       // 第一题正确答案是 A
+        "mcq_2": "B",       // 第二题正确答案是 B
+        "tf_1": "True"      // 判断题正确答案是 True
+    };
+    const pointsPerQuestion = 10; // 每答对一题得 10 分
+
+    const form = document.getElementById('vipForm');
+    
+    form.addEventListener('submit', function(event) {
+        let totalScore = 0;
+        
+        // 遍历答案字典进行算分
+        for (const [questionName, correctValue] of Object.entries(answerKey)) {
+            // 获取用户选中的选项
+            const selectedOption = document.querySelector(`input[name="${questionName}"]:checked`);
+            
+            if (selectedOption && selectedOption.value === correctValue) {
+                totalScore += pointsPerQuestion;
+            }
+        }
+        
+        // 将计算出的总分赋值给隐藏的 input，随表单一起提交给你
+        document.getElementById('auto_score').value = totalScore + " 分";
+        
+        // 提醒：此处允许表单继续默认提交 (不使用 event.preventDefault())
+        // 表单会被发送到 form 的 action 属性指定的地址。
+    });
+</script>
+
+</body>
+</html>
